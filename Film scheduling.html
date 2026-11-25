@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Film scheduling</title>
+<style>
+:root{--bg:#f2f4f6;--sf:#fff;--ink:#16202b;--mu:#5e6b78;--ln:#d5dce3;--ac:#0b5cad;--ai:#fff;--hi:#e8a317;--bad:#b3372b;--ok:#1d7a4d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f161d;--sf:#18222c;--ink:#e8eef3;--mu:#97a6b3;--ln:#2b3a47;--ac:#5aa8f0;--ai:#07203a;--bad:#ff8a7a;--ok:#5fd394}}
+:root[data-theme="dark"]{--bg:#0f161d;--sf:#18222c;--ink:#e8eef3;--mu:#97a6b3;--ln:#2b3a47;--ac:#5aa8f0;--ai:#07203a;--bad:#ff8a7a;--ok:#5fd394}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:900px;margin:0 auto;padding:14px 12px 60px}
+h1{font-size:1.4rem;margin:4px 0}h2{font-size:1.05rem;margin:20px 0 8px}
+.mu{color:var(--mu)}.tabs{display:flex;gap:2px;border-bottom:1px solid var(--ln);margin:8px 0;overflow-x:auto}
+button,select,input,textarea{font:inherit;color:var(--ink)}
+.tab{flex:0 0 auto;background:none;border:0;border-bottom:4px solid transparent;padding:12px 14px;font-weight:700;color:var(--mu);cursor:pointer;min-height:48px}
+.tab.on{color:var(--ink);border-color:var(--hi)}
+:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:12px;margin-bottom:10px}
+.row{display:flex;flex-wrap:wrap;gap:10px}.row>*{flex:1 1 200px}
+label{display:block;font-weight:600;font-size:.85rem;margin:8px 0 3px}
+select,input,textarea{width:100%;min-height:46px;background:var(--sf);border:1px solid var(--ln);border-radius:8px;padding:9px}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;font-weight:400;font-size:1rem}.chk input{width:22px;min-height:22px;height:22px;flex:none}
+.btn{background:var(--ac);color:var(--ai);border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;min-height:46px}
+.btn.alt{background:none;color:var(--ac);border:1px solid var(--ac)}.btn.x{background:none;color:var(--bad);border:1px solid var(--ln);font-weight:600}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.li{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--ln);padding:6px 0}
+.tot{font-weight:800;font-size:1.1rem;margin-top:8px}
+.calh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}.calh .btn{min-width:56px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.dw{text-align:center;font-size:.8rem;color:var(--mu)}
+.c{min-height:54px;background:var(--sf);border:1.5px solid var(--ln);border-radius:8px;padding:4px 2px;cursor:pointer;font-weight:700;line-height:1.15}
+.c small{display:block;font-weight:400;font-size:.7rem;opacity:.85}.c.o{opacity:.55}
+.c[aria-pressed="true"]{background:var(--ac);color:var(--ai);border-color:var(--ac)}.c:disabled{opacity:.3;cursor:not-allowed}
+.bar{height:8px;background:var(--ln);border-radius:4px;overflow:hidden;margin:4px 0}.bar i{display:block;height:100%;background:var(--hi)}
+.bk{border:1px solid var(--ln);border-left:6px solid var(--ln);border-radius:8px;padding:8px 10px;margin:6px 0;background:var(--sf)}.bk.new{border-left-color:var(--hi)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.acts select{width:auto;flex:0 0 auto;max-width:170px;min-height:42px;padding:6px 8px}
+.msg{min-height:1.4em;margin-top:8px;font-weight:600}.bad{color:var(--bad)}.ok{color:var(--ok)}
+.banner{background:var(--hi);color:#201400;border-radius:8px;padding:8px 12px;margin:8px 0;font-weight:600}
+.alert{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:#c62828;color:#fff;border-radius:8px;padding:12px;margin:8px 0;font-size:1.05rem;display:flex;gap:10px;align-items:center;justify-content:space-between;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.alert .btn{background:#fff;color:#c62828;flex:none}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:30;display:none}
+textarea.cfg{min-height:380px;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace}
+.tm{font-weight:800;color:var(--ac);font-size:1.05rem}
+.svc{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:54px;background:var(--sf);border:1.5px dashed var(--ln);border-radius:10px;padding:10px 14px;margin-bottom:10px;font:inherit;font-weight:700;color:var(--ink);cursor:pointer;text-align:left}
+.card.on{border:2px solid var(--ac)}
+.addon{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{font-size:.75rem;font-weight:700;border:1px solid var(--ln);border-radius:20px;padding:1px 8px;color:var(--mu);vertical-align:middle}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;display:flex;align-items:center;justify-content:center;padding:16px}.dlg{background:var(--sf);border-radius:12px;padding:18px;max-width:420px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.scroll{overflow-x:auto}.sheet{border-collapse:collapse;width:100%;min-width:820px}.sheet th{white-space:nowrap}.sheet tr.dr td:first-child,.sheet th:first-child{width:6px;padding:0}.sheet tr.dr td:nth-child(2),.sheet th:nth-child(2){width:112px;white-space:nowrap}.sheet tr.dr td:nth-child(4),.sheet th:nth-child(4),.sheet tr.dr td:nth-child(5),.sheet th:nth-child(5){width:90px}.sheet tr.dr td:nth-child(6){white-space:nowrap}.sheet tr.dr td:nth-child(6) input{width:84px;display:inline-block}.sheet th:nth-child(6){width:270px}.sheet tr.dr td:nth-child(7),.sheet th:nth-child(7){width:46px}.sheet th,.sheet td{padding:4px;border-bottom:1px solid var(--ln);text-align:left;vertical-align:middle}.sheet input{min-height:40px}.sheet tr.sh td{background:var(--bg);padding-top:14px}
+.sumbar{position:sticky;bottom:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));margin-top:12px;box-shadow:0 -4px 14px rgba(0,0,0,.15)}
+@media print{.tabs,.btn,.acts,#banner,#alerts,.noprint,input,select{display:none!important}body{background:#fff;color:#000}.card,.bk{border-color:#999;break-inside:avoid}}
+</style>
+</head>
+<body>
+<main>
+<h1>Install Scheduler</h1>
+<div id="banner"></div><div id="alerts"></div>
+<div class="tabs" id="tabs"></div>
+<div id="view"></div>
+</main>
+<div id="modal"></div><div id="toast" role="status"></div>
+<script>
+const DEF={"shop": {"installers": ["Installer"], "advisors": ["Advisor 1", "Advisor 2"], "dayHours": 8, "shortJob": 4, "start": 9, "lunchAt": 13, "lunch": 1, "workDays": [1, 2, 3, 4, 5], "closed": []}, "services": [{"id": "tint", "name": "Window Tint", "tiers": ["Tier 1", "Tier 2", "Tier 3"], "options": [{"n": "2 Fronts", "h": 1, "pt": 1.5}, {"n": "Full – Small", "h": 2.5, "pt": 3}, {"n": "Full – Standard", "h": 2.5, "pt": 3}, {"n": "Full – Mid size", "h": 2.5, "pt": 4}, {"n": "Full – Large", "h": 2.5, "pt": 4}, {"n": "Windshield", "h": 1.5, "pt": 2}, {"n": "Brow", "h": 0.5, "pt": 1}, {"n": "Sunroof", "h": 1, "pt": 1.5}, {"n": "Sunroof – Panoramic/Dual", "h": 2, "pt": 3}], "addons": [{"n": "Windshield", "h": 1.5, "pt": 2}, {"n": "Brow", "h": 0.5, "pt": 1}, {"n": "Sunroof", "h": 1, "pt": 1.5}, {"n": "Sunroof – Panoramic/Dual", "h": 2, "pt": 3}]}, {"id": "tintrm", "name": "Tint Removal", "options": [{"n": "Full Vehicle", "h": 2.5, "pt": 2.5}, {"n": "2 Fronts", "h": 1, "pt": 1}, {"n": "Windshield", "h": 1, "pt": 1}], "addons": []}, {"id": "ppf", "name": "Paint Protection Film (PPF)", "options": [{"n": "City", "h": 3, "pt": 10}, {"n": "Highway", "h": 5.5, "pt": 10}, {"n": "Interstate", "h": 8, "pt": 12}], "addons": []}, {"id": "stealth", "name": "Stealth PPF", "options": [{"n": "City", "h": 3, "pt": 10}, {"n": "Highway", "h": 5.5, "pt": 10}, {"n": "Interstate", "h": 8, "pt": 12}], "addons": []}, {"id": "cppf", "name": "Color PPF", "options": [{"n": "Top only", "h": 8, "pt": 16}, {"n": "Tuxedo", "h": 12, "pt": 24}], "addons": []}, {"id": "chrome", "name": "Chrome Delete (Vinyl)", "options": [{"n": "Window trim", "h": 4, "pt": 6}], "addons": [{"n": "Door handles (pair)", "h": 1.5, "pt": 2, "q": true}, {"n": "Mirror caps", "h": 1.5, "pt": 2}, {"n": "Simple grille", "h": 2, "pt": 3}, {"n": "Complex grille", "h": 4, "pt": 6}, {"n": "Roof rails", "h": 2, "pt": 3}, {"n": "Door length accent", "h": 0.5, "pt": 1, "q": true}, {"n": "Up to 2ft accent", "h": 0.5, "pt": 1, "q": true}, {"n": "Emblem or small accent (each)", "h": 0.5, "pt": 1, "q": true}]}, {"id": "cc", "name": "Color Change (Vinyl)", "options": [{"n": "Compact", "h": 24, "pt": 41}, {"n": "Standard", "h": 24, "pt": 41}, {"n": "Compact SUV", "h": 32, "pt": 41}, {"n": "Mid size SUV/Trucks", "h": 40, "pt": 41}, {"n": "Large SUV/HD trucks/Vans", "h": 40, "pt": 41}], "addons": []}]};
+const done=b=>b.status==="Done"||b.status==="Completed";
+const stOf=b=>done(b)?"Done":["Approved","Ready"].includes(b.status)?b.status:"Requested";
+const me=Math.random().toString(36).slice(2);
+const S={tab:"sched",cfg:DEF,bookings:[],all:[],items:[],dr:{sid:DEF.services[0].id,tier:0,opt:0,ad:[]},date:null,mo:null,inst:"auto",f:{},msg:"",ok:false,can:false,q:"",from:"",qa:"all",alerts:[],editId:null,pend:0};
+let db=null;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fh=h=>(Math.round(h*100)/100)+"h";
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const parse=s=>new Date(s+"T00:00:00");
+const lab=s=>parse(s).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+const tIso=()=>iso(new Date());
+const svc=id=>S.cfg.services.find(s=>s.id===id)||S.cfg.services[0];
+const cap=()=>S.cfg.shop.dayHours,insts=()=>S.cfg.shop.installers,advs=()=>S.cfg.shop.advisors||[];
+const work=d=>S.cfg.shop.workDays.includes(d.getDay())&&!(S.cfg.shop.closed||[]).includes(iso(d));
+const bks=()=>S.editId?S.bookings.filter(b=>b.id!==S.editId):S.bookings;
+const sh=()=>S.cfg.shop.start??9,lo=()=>(S.cfg.shop.lunchAt??12)-sh(),ll=()=>S.cfg.shop.lunch??1;
+const clk=(o,end)=>sh()+o+((end?o>lo():o>=lo())?ll():0);
+const tm=h=>{const H=Math.floor(h),m=Math.round((h-H)*60);return((H+11)%12+1)+":"+String(m).padStart(2,"0")+" "+(H<12?"am":"pm")};
+const rng=(o,h)=>tm(clk(o,0))+" – "+tm(clk(o+h,1));
+function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",3500)}
+
+const qOf=(s,it,i)=>{const a=s.addons[i];return a?(a.q?(Number(it.q&&it.q[i])||0):1):0};
+function itemHours(s,it){
+  const o=s.options[it.opt]||s.options[0];
+  return o.h+it.ad.reduce((t,i)=>t+(s.addons[i]?s.addons[i].h*qOf(s,it,i):0),0);
+}
+function itemLabel(s,it){
+  const o=s.options[it.opt]||s.options[0],ads=it.ad.filter(i=>s.addons[i]).map(i=>s.addons[i].n+(s.addons[i].q?" ×"+qOf(s,it,i):""));
+  return s.name+" — "+(s.tiers?s.tiers[it.tier]+" · ":"")+o.n+(ads.length?" + "+ads.join(", "):"");
+}
+const total=()=>S.items.reduce((a,it)=>a+itemHours(svc(it.sid),it),0);
+const pOf=(sv,tier,x)=>sv.tiers&&x.prt?x.prt[tier]:x.pr;
+function extras(){return S.items.reduce((t,it)=>{const s=svc(it.sid),o=s.options[it.opt]||s.options[0],add=(x,n)=>{t.pt+=(Number(x.pt)||0)*n;t.pr+=(Number(pOf(s,it.tier,x))||0)*n};add(o,1);it.ad.forEach(i=>{if(s.addons[i])add(s.addons[i],qOf(s,it,i))});return t},{pt:0,pr:0})}
+function qtyMissing(){const m=[];S.items.forEach(it=>{const s=svc(it.sid);it.ad.forEach(i=>{const a=s.addons[i];if(a&&a.q&&!(Number(it.q&&it.q[i])>=1))m.push(a.n)})});return m}
+function usage(b){const u={};b.forEach(x=>(x.days||[]).forEach(y=>{u[x.inst]=u[x.inst]||{};u[x.inst][y.d]=(u[x.inst][y.d]||0)+y.h+(y.g||0)}));return u}
+const free=(u,i,d)=>cap()-((u[i]||{})[d]||0);
+function elapsed(){const n=new Date(),t=n.getHours()+n.getMinutes()/60,s=sh(),L=s+lo(),e=L+ll();const x=t<=s?0:t<=L?t-s:t<=e?lo():t-s-ll();return Math.min(cap(),Math.ceil(x*4)/4)}
+const DS=b=>[...new Set(b.days.map(x=>x.d))];
+function pEnd(b){let d=parse(b.start),o=(b.days[0]||{}).o||0,left=Number(b.pt)||0;for(let n=0;n<400;n++){if(work(d)){const av=cap()-o;if(left<=av+1e-9)return lab(iso(d))+" "+tm(clk(o+left,1));left-=av}d.setDate(d.getDate()+1);o=0}return ""}
+const IT=b=>b.items.map(x=>x.replace(/\s*\([\d.]+h\)$/,"")).join("; ");
+function occ(b){const m={};b.forEach(x=>(x.days||[]).forEach(y=>{if(y.o==null)return;const k=x.inst+"|"+y.d;(m[k]=m[k]||[]).push([y.o,y.o+y.h])}));return m}
+function gaps(m,i,d){const a=[...(m[i+"|"+d]||[])],out=[];if(d===tIso())a.push([0,elapsed()]);a.sort((p,q)=>p[0]-q[0]);let c=0;a.forEach(([s,e])=>{if(s>c+1e-9)out.push([c,s]);c=Math.max(c,e)});if(c<cap()-1e-9)out.push([c,cap()]);return out}
+function fit(g,s,hrs){const cp=cap(),short=hrs<=(S.cfg.shop.shortJob??4),e=Math.min(s+hrs,cp);
+  if(s+hrs>cp+1e-9&&cp-s<1-1e-9)return null;
+  return g.some(x=>x[0]<=s+1e-9&&x[1]>=e-1e-9)?e:null}
+function plan(m,i,D,hrs,t){
+  if(t==null){for(let c=0;c<cap()-1e-9;c+=.25){const r=plan(m,i,D,hrs,c);if(r)return r}return null}
+  const e=fit(gaps(m,i,D),t,hrs);if(e==null)return null;
+  const out=[{d:D,o:t,h:e-t}];let left=hrs-(e-t),d=parse(D);
+  for(let n=0;n<150&&left>1e-9;n++){d.setDate(d.getDate()+1);if(!work(d))continue;const k=iso(d),h=Math.min(left,cap());
+    if(!gaps(m,i,k).some(x=>x[0]<=1e-9&&x[1]>=h-1e-9))return null;
+    out.push({d:k,o:0,h});left-=h}
+  return left>1e-9?null:out;
+}
+function starts(m,D,hrs){const out=[];for(let t=0;t<cap()-1e-9;t+=.25)if(insts().some((_,i)=>plan(m,i,D,hrs,t)))out.push(t);return out}
+function slots(d,i,all){const r=[];all.forEach(b=>{if(b.inst!==i)return;(b.days||[]).forEach(x=>{if(x.d===d&&x.o!=null)r.push({b,o:x.o,h:x.h})})});return r.sort((p,q)=>p.o-q.o)}
+function dayList(from){const a=[],d=from?parse(from):new Date();d.setHours(0,0,0,0);for(let n=0;n<150&&a.length<30;n++,d.setDate(d.getDate()+1))if(work(d))a.push(iso(d));return a}
+function okInsts(u,date,hrs){return insts().map((_,i)=>i).filter(i=>plan(u,i,date,hrs))}
+
+function render(){
+  const nm=S.bookings.filter(b=>stOf(b)==="Requested").length,na=S.bookings.filter(b=>stOf(b)==="Approved").length,nr=S.bookings.filter(b=>stOf(b)==="Ready").length;const tabs=[["book","Book"],["sched","Schedule"],["mgr","Manager approval"+(nm?" ("+nm+")":"")],["queue","Advisor queue"+(na?" ("+na+")":"")],["inst","Installer"+(nr?" ("+nr+")":"")]];if(S.can)tabs.push(["sheet","Services"],["admin","Admin"]);
+  $("#tabs").innerHTML=tabs.map(t=>`<button class="tab ${S.tab===t[0]?"on":""}" data-a="tab" data-t="${t[0]}">${t[1]}</button>`).join("");
+  $("#view").innerHTML={mgr:mgrView,inst:schedView,book:bookView,sched:schedView,queue:queueView,sheet:sheetView,admin:adminView}[S.tab]();
+  drawAlerts();
+}
+function soft(){const a=document.activeElement;if(a&&a.closest&&a.closest("#view")&&a.matches("input,textarea"))S.pend=1;else render()}
+document.addEventListener("focusout",()=>{if(S.pend)setTimeout(()=>{const a=document.activeElement;if(!(a&&a.matches&&a.matches("input,textarea"))){S.pend=0;render()}},350)});
+
+function card(b,d,o,h){
+  const i=d?b.days.findIndex(x=>x.d===d):-1,last=b.days[b.days.length-1].d;
+  const f0=b.days[0],when="Starts "+lab(b.start)+(f0&&f0.o!=null?" "+tm(clk(f0.o,0)):"");
+  const st=stOf(b),act=S.tab==="mgr"&&st==="Requested"?`<button class="btn" data-a="setst" data-id="${esc(b.id)}" data-v="Approved">Approve</button><button class="btn x" data-a="setst" data-id="${esc(b.id)}" data-v="Declined">Decline</button>`:S.tab==="queue"&&st==="Approved"?`<button class="btn" data-a="setst" data-id="${esc(b.id)}" data-v="Ready">Ready for install</button>`:S.tab==="inst"&&st==="Ready"?`<button class="btn" data-a="setst" data-id="${esc(b.id)}" data-v="Done">Mark done</button>`:"";
+  return `<div class="bk ${st==="Requested"?"new":""}">${d&&o!=null?`<div class="tm">${d===b.start?tm(clk(o,0)):"Continued"}</div>`:""}<b>${esc(b.veh||b.ref)}</b> <span class="pill">${st}</span>${b.veh&&b.ref?" · "+esc(b.ref):""}<div class="mu">${esc(IT(b))}</div>
+  <div class="mu">${[when,b.pt?"Customer promise: "+pEnd(b):"",insts().length>1?esc(insts()[b.inst]||""):"","booked by "+esc(b.by||"?"),b.adv?"advisor "+esc(b.adv):"",b.aby?"approved by "+esc(b.aby):"",b.advSale?"advisor sale, no approval needed":"",b.cust?esc(b.cust):"",b.note?esc(b.note):""].filter(Boolean).join(" · ")}</div>
+  <div class="acts">${act}
+  ${advs().length&&S.tab==="queue"?`<select data-a="adv" data-id="${esc(b.id)}" aria-label="Advisor">${[...new Set([...(b.adv?[b.adv]:[]),...advs()])].map(a=>`<option ${a===b.adv?"selected":""}>${esc(a)}</option>`).join("")}</select>`:""}${S.tab!=="sched"&&S.tab!=="inst"?`<button class="btn alt" data-a="edit" data-id="${esc(b.id)}">Edit</button><button class="btn x" data-a="cancel" data-id="${esc(b.id)}">Cancel</button>`:""}</div></div>`;
+}
+function dayCard(d){
+  const u=usage(S.bookings);
+  return `<div class="card"><b>${lab(d)}</b> <span class="mu">${tm(clk(0,0))} – ${tm(clk(cap(),1))}, lunch ${tm(sh()+lo())}</span>`+insts().map((n,i)=>{
+    const used=(u[i]||{})[d]||0,bs=slots(d,i,S.bookings);
+    return `<div style="margin-top:8px"><span class="mu">${esc(n)} · ${fh(used)} of ${fh(cap())} booked</span><div class="bar"><i style="width:${Math.min(100,used/cap()*100)}%"></i></div>${bs.map(s=>card(s.b,d,s.o,s.h)).join("")||(work(parse(d))?'<div class="mu">Nothing booked.</div>':'<div class="mu">Closed.</div>')}</div>`}).join("")+`</div>`;
+}
+function schedView(){
+  return `<div class="row noprint"><div><label>Search (vehicle, RO/stock, customer, advisor)</label><input data-f="q" value="${esc(S.q)}" type="search"></div><div style="flex:0 0 auto;align-self:end"><button class="btn alt" data-a="print">Print day</button></div></div><div id="res">${resHtml()}</div>`;
+}
+function resHtml(){
+  const q=S.q.trim().toLowerCase();
+  if(q){const r=S.bookings.filter(b=>[b.veh,b.ref,b.cust,b.by,b.adv,b.note,b.items.join(" ")].join(" ").toLowerCase().includes(q)).sort((a,b)=>a.start.localeCompare(b.start));
+    return `<h2>${r.length} match${r.length===1?"":"es"}</h2>`+r.map(b=>card(b)).join("")}
+  return schedCal()+dayCard(S.sd||tIso());
+}
+function schedCal(){
+  const t=tIso(),m=S.smo||(S.smo=t.slice(0,8)+"01"),f=parse(m),mo=f.getMonth(),s=new Date(f);s.setDate(1-f.getDay());
+  const u=usage(S.bookings),sel=S.sd||t;
+  let h=`<div class="calh"><button class="btn alt" data-a="smo" data-d="-1" aria-label="Previous month">‹</button><b>${f.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</b><button class="btn alt" data-a="smo" data-d="1" aria-label="Next month">›</button></div><div style="margin:0 0 8px"><button class="btn alt" data-a="gotoday">Today</button></div><div class="cal">`+["S","M","T","W","T","F","S"].map(x=>`<div class="dw">${x}</div>`).join("");
+  for(let n=0;n<42;n++){const d=new Date(s);d.setDate(s.getDate()+n);const k=iso(d),hrs=insts().reduce((a,_,i)=>a+((u[i]||{})[k]||0),0);
+    h+=`<button class="c ${d.getMonth()===mo?"":"o"}" data-a="sday" data-d="${k}" aria-pressed="${sel===k}" style="${k===t&&sel!==k?"border-color:var(--hi)":""}">${d.getDate()}<small>${work(d)?(hrs?fh(hrs):""):"closed"}</small></button>`}
+  return h+`</div>`;
+}
+function mgrView(){
+  const l=S.bookings.filter(b=>stOf(b)==="Requested").sort((a,b)=>(a.created||"").localeCompare(b.created||"")),dec=(S.all||[]).filter(b=>b.status==="Declined").slice(-10).reverse();
+  return `<div class="row"><div><label>Your name (recorded with approvals)</label><input data-f="mname" value="${esc(S.f.mname)}" autocomplete="name"></div></div><h2>${l.length} waiting for approval</h2>`+(l.map(b=>card(b)).join("")||`<p class="mu">Nothing waiting.</p>`)+(dec.length?`<h2>Recently declined</h2>`+dec.map(b=>`<div class="bk"><b>${esc(b.veh||b.ref)}</b>${b.ref&&b.veh?" · "+esc(b.ref):""} <span class="mu">${esc(IT(b))} · ${lab(b.start)} · booked by ${esc(b.by||"?")}${b.aby?" · declined by "+esc(b.aby):""}</span></div>`).join(""):"");
+}
+function queueView(){
+  const l=S.bookings.filter(b=>!done(b)&&stOf(b)!=="Requested"&&(S.qa==="all"||b.adv===S.qa)).sort((a,b)=>a.start.localeCompare(b.start));
+  return `<div class="row"><div><label>Advisor</label><select data-a="qa"><option value="all">All advisors</option>${advs().map(a=>`<option ${S.qa===a?"selected":""}>${esc(a)}</option>`).join("")}</select></div></div>
+  <h2>${l.length} open</h2>`+(l.map(b=>card(b)).join("")||`<p class="mu">Nothing waiting.</p>`);
+}
+function calView(hrs,u){
+  const t=tIso(),m=S.mo||(S.mo=t.slice(0,8)+"01"),f=parse(m),mo=f.getMonth(),s=new Date(f);s.setDate(1-f.getDay());
+  let h=`<div class="calh"><button class="btn alt" data-a="mo" data-d="-1" aria-label="Previous month">‹</button><b>${f.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</b><button class="btn alt" data-a="mo" data-d="1" aria-label="Next month">›</button></div><div class="cal">`+["S","M","T","W","T","F","S"].map(x=>`<div class="dw">${x}</div>`).join("");
+  for(let n=0;n<42;n++){const d=new Date(s);d.setDate(s.getDate()+n);const k=iso(d),live=k>=t&&work(d),ok=live&&okInsts(u,k,hrs).length;
+    const fr=live?Math.max(...insts().map((_,i)=>gaps(u,i,k).reduce((a,x)=>a+x[1]-x[0],0))):0;
+    h+=`<button class="c ${d.getMonth()===mo?"":"o"}" data-a="date" data-d="${k}" aria-pressed="${S.date===k}" ${ok?"":"disabled"}>${d.getDate()}<small>${live?(ok?fh(fr)+" free":"full"):""}</small></button>`}
+  return h+"</div>";
+}
+function bookView(){
+  const hrs=total(),u=occ(bks()),T=extras(),$$=n=>"$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  let h=S.editId?`<div class="banner">Editing ${esc(S.f.veh||"booking")} <button class="btn alt" data-a="canceledit" style="margin-left:8px">Stop editing</button></div>`:"";
+  h+=`<h2>1. Choose services</h2>`+S.cfg.services.map(sv=>{
+    const it=S.items.find(x=>x.sid===sv.id);
+    if(!it)return `<button class="svc" data-a="tog" data-sid="${sv.id}"><span>${esc(sv.name)}</span><span class="mu">+ Add</span></button>`;
+    return `<div class="card on"><div class="li"><b>${esc(sv.name)}</b><span><button class="btn x" data-a="tog" data-sid="${sv.id}">Remove</button></span></div><div class="row">
+     ${sv.tiers?`<div><label>Film tier</label><select data-a="tier" data-sid="${sv.id}">${sv.tiers.map((t,i)=>`<option value="${i}" ${i===it.tier?"selected":""}>${esc(t)}</option>`).join("")}</select></div>`:""}
+     <div><label>Option</label><select data-a="opt" data-sid="${sv.id}">${sv.options.map((o,i)=>`<option value="${i}" ${i===it.opt?"selected":""}>${esc(o.n)}${pOf(sv,it.tier,o)!=null?" · $"+pOf(sv,it.tier,o):""}</option>`).join("")}</select></div></div>
+     ${sv.addons.length?`<label>Add-ons</label>`+sv.addons.map((a,i)=>`<div class="addon"><label class="chk"><input type="checkbox" data-a="ad" data-sid="${sv.id}" data-i="${i}" ${it.ad.includes(i)?"checked":""}>${esc(a.n)}</label>${a.q&&it.ad.includes(i)?`<input type="number" inputmode="numeric" min="1" step="1" data-a="qty" data-sid="${sv.id}" data-i="${i}" value="${esc(it.q&&it.q[i]!=null?it.q[i]:"")}" placeholder="Qty" aria-label="Quantity for ${esc(a.n)} (required)" style="width:84px">`:""}</div>`).join(""):""}</div>`}).join("");
+  h+=`<div class="tot">${S.items.length?`${T.pt?`Customer promise: ${fh(T.pt)}`:""}${T.pt&&T.pr?"<br>":""}${T.pr?`Price: ${$$(T.pr)}`:""}${!T.pt&&!T.pr?"Pricing not set up yet":""}`:"Nothing selected yet"}</div>`;
+  if(!S.items.length)return h;
+  const qm=qtyMissing();if(qm.length)return h+`<div class="msg bad" role="status">Choose a quantity for: ${esc(qm.join(", "))}.</div>`;
+  h+=`<h2 id="dates">2. Pick a start date</h2>`+calView(hrs,u);
+  if(S.date){
+    const ok=okInsts(u,S.date,hrs),st=starts(u,S.date,hrs),tt=(S.tm=st.includes(S.tm)?S.tm:st[0]);
+    if(S.inst!=="auto"&&!ok.includes(+S.inst))S.inst="auto";
+    const okT=ok.filter(i=>plan(u,i,S.date,hrs,tt)),pi=S.inst!=="auto"&&okT.includes(+S.inst)?+S.inst:okT[0],pl=pi!=null?plan(u,pi,S.date,hrs,tt):null;S.ovn=pl&&new Set(pl.map(x=>x.d)).size>1?[...new Set(pl.map(x=>x.d))]:null;S.key=S.date+"|"+tt+"|"+hrs+"|"+pi;
+    h+=`<h2 id="det">3. Start time and details</h2><div class="card"><label>Start time</label><select data-a="tm">${st.map(t=>`<option value="${t}" ${t===tt?"selected":""}>${tm(clk(t,0))}</option>`).join("")}</select>${insts().length>1?`<label>Installer</label><select data-a="inst"><option value="auto">First available</option>${ok.map(i=>`<option value="${i}" ${String(S.inst)===String(i)?"selected":""}>${esc(insts()[i])}</option>`).join("")}</select>`:""}
+     <div class="row"><div><label>Booked by <span class="mu">(required)</span></label><input data-f="by" value="${esc(S.f.by)}" autocomplete="name"></div><div><label>Sold by</label><select data-f="sold"><option value="">Sales (manager approval needed)</option>${advs().map(a=>`<option value="${esc(a)}" ${S.f.sold===a?"selected":""}>${esc(a)} (advisor sale, no approval)</option>`).join("")}</select></div>
+     </div>
+     <div class="row"><div><label>Vehicle (year / make / model) <span class="mu">(required)</span></label><input data-f="veh" value="${esc(S.f.veh)}"></div><div><label>Stock # or VIN <span class="mu">(required)</span></label><input data-f="ref" value="${esc(S.f.ref)}" autocapitalize="characters"></div></div>
+     <div class="row"><div><label>Notes <span class="mu">(optional)</span></label><input data-f="note" value="${esc(S.f.note)}"></div></div>
+     ${pl?`<p class="mu">${insts().length>1?esc(insts()[pi])+": ":""}${pl.map(x=>lab(x.d)+" "+rng(x.o,x.h)).join(" → ")}</p>${S.ovn?`<p class="bad"><b>Overnight job.</b> The vehicle must be left overnight. You'll be asked to confirm before it books.</p>`:""}`:""}
+     <button class="btn" data-a="confirm" style="width:100%" ${pl?"":"disabled"}>${S.editId?"Save changes":"Confirm booking"}</button></div>`;
+  }
+  return h+`<div class="msg ${S.ok?"ok":"bad"}" role="status">${esc(S.msg)}</div><div class="sumbar"><span>${[T.pt?`<b>${fh(T.pt)}</b> promise`:"",T.pr?`<b>${$$(T.pr)}</b>`:"",`${S.items.length} service${S.items.length>1?"s":""}`].filter(Boolean).join(" · ")}</span><button class="btn" data-a="godate">${S.date?"Review details":"Choose date"} ↓</button></div>`;
+}
+function sheetView(){
+  if(!S.sheet)S.sheet=JSON.parse(JSON.stringify(S.cfg.services));
+  let r="";
+  S.sheet.forEach((sv,si)=>{
+    r+=`<tr class="sh"><td colspan="7"><input value="${esc(sv.name)}" data-sf="name" data-st="s" data-sr="${si}" aria-label="Service name" style="font-weight:700;max-width:360px"> <button class="btn x" data-a="sdelsvc" data-sr="${si}">Remove service</button>${sv.tiers?` <span class="mu">Price boxes: ${esc(sv.tiers.join(" / "))}</span>`:""}</td></tr>`;
+    [["o","Option",sv.options],["a","Add-on",sv.addons]].forEach(([t,lb,arr])=>arr.forEach((o,i)=>{
+      const at=f=>`data-sr="${si}" data-st="${t}" data-si="${i}" data-sf="${f}"`;
+      r+=`<tr class="dr"><td></td><td>${lb}${t==="a"?` <label style="display:inline-flex;gap:4px;align-items:center;margin:0;font-weight:400"><input type="checkbox" ${at("q")} ${o.q?"checked":""} style="width:18px;min-height:18px;height:18px"> Qty</label>`:""}</td><td><input value="${esc(o.n)}" ${at("n")} aria-label="Name"></td><td><input type="number" step="0.25" min="0" value="${esc(o.h)}" ${at("h")} aria-label="Install hours"></td><td><input type="number" step="0.25" min="0" value="${esc(o.pt)}" ${at("pt")} aria-label="Customer promise hours"></td><td>${sv.tiers?sv.tiers.map((tn,k)=>`<input type="number" step="0.01" min="0" value="${esc((o.prt||[])[k])}" ${at("prt")} data-sp="${k}" placeholder="${esc(tn)}" aria-label="${esc(tn)} price" style="width:84px;display:inline-block">`).join(" "):`<input type="number" step="0.01" min="0" value="${esc(o.pr)}" ${at("pr")} aria-label="Price">`}</td><td><button class="btn x" data-a="sdel" data-sr="${si}" data-st="${t}" data-si="${i}" aria-label="Remove row">✕</button></td></tr>`}));
+    r+=`<tr><td></td><td colspan="6"><button class="btn alt" data-a="sadd" data-sr="${si}" data-st="o">+ Option</button> <button class="btn alt" data-a="sadd" data-sr="${si}" data-st="a">+ Add-on</button></td></tr>`;
+  });
+  return `<h2>Services sheet</h2><p class="mu">Install hours drive the schedule. Customer promise is the time promised to the customer, in hours (quarter hours are fine). Promise and retail price are totaled at the bottom of the booking page. Leave them blank until you have them. Rows with no name are dropped when you save.</p><div class="scroll"><table class="sheet"><thead><tr><th></th><th>Type</th><th>Name</th><th title="Internal only, not shown to customers">Install hrs</th><th>Promise hrs</th><th>Retail price $</th><th></th></tr></thead><tbody>${r}</tbody></table></div><div class="acts"><button class="btn alt" data-a="ssvc">+ Add service</button><button class="btn" data-a="ssave">Save changes</button><button class="btn alt" data-a="sdisc">Discard changes</button></div><div class="msg ${S.ok?"ok":"bad"}">${esc(S.msg)}</div>`;
+}
+async function saveSheet(){
+  try{
+    const sv=JSON.parse(JSON.stringify(S.sheet));
+    if(!sv.length)throw new Error("Keep at least one service.");
+    sv.forEach(s=>{
+      if(!String(s.name).trim())throw new Error("Every service needs a name.");
+      ["options","addons"].forEach(k=>{s[k]=s[k].filter(o=>String(o.n).trim()).map(o=>{
+        const h=Number(o.h);if(!(h>=0))throw new Error("Hours must be a number: "+o.n);
+        const x={n:String(o.n).trim(),h};if(o.q===true)x.q=true;
+        if(String(o.pt??"")!==""){const q=Number(o.pt);if(!(q>=0))throw new Error("Promise hours must be a number: "+o.n);x.pt=q}
+        if(String(o.pr??"")!==""){const p=Number(o.pr);if(!(p>=0))throw new Error("Price must be a number: "+o.n);x.pr=p}
+        if(Array.isArray(o.prt)){const arr=(s.tiers||[]).map((_,k)=>{const v=o.prt[k];if(v==null||String(v)==="")return null;const p=Number(v);if(!(p>=0))throw new Error("Price must be a number: "+o.n);return p});if(arr.some(v=>v!=null))x.prt=arr}
+        return x})});
+      if(!s.options.length)throw new Error(s.name+" needs at least one option.");
+    });
+    const c={...S.cfg,services:sv};
+    if(db)await db.doc("config/catalog").set({json:JSON.stringify(c)});
+    S.cfg=c;S.sheet=null;S.items=[];S.date=null;S.ok=true;S.msg="Saved.";
+  }catch(err){S.ok=false;S.msg="Not saved: "+err.message}
+  render();
+}
+function adminView(){
+  return `<h2>Services and shop settings</h2><p class="mu">Edit the JSON, then Save. <code>installers</code> and <code>advisors</code> are lists of names. <code>closed</code> is a list of dates the shop is closed, like <code>["2026-11-26"]</code>. <code>dayHours</code> is billable hours per day and <code>workDays</code> uses 0=Sun to 6=Sat. Options and add-ons are <code>{"n":"name","h":hours}</code>. Add <code>"q":true</code> to an add-on to require a quantity when it is chosen (the Services tab has a Qty box for this). <code>"tiers":[...]</code> adds a film tier picker. Existing bookings are not changed.</p>
+  <textarea class="cfg" id="cfg" spellcheck="false">${esc(JSON.stringify(S.cfg,null,1))}</textarea>
+  <div class="acts"><button class="btn" data-a="saveCfg">Save changes</button><button class="btn alt" data-a="resetCfg">Reset to defaults</button></div>
+  <div class="msg ${S.ok?"ok":"bad"}">${esc(S.msg)}</div>`;
+}
+
+function drawModal(){const m=$("#modal");if(!m)return;m.innerHTML=S.modal&&S.ovn?`<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-label="Overnight stay"><h2 style="margin-top:0">Vehicle must stay overnight</h2><p>This job runs ${esc(S.ovn.map(x=>lab(x)).join(" → "))}. The customer has to leave the vehicle overnight.</p><p><b>Confirm the customer agrees before you book.</b></p><div class="acts"><button class="btn" data-a="ovnok">Customer agrees, book it</button><button class="btn alt" data-a="ovnno">Go back</button></div></div></div>`:""}
+function drawAlerts(){drawModal();$("#alerts").innerHTML=S.alerts.map(a=>`<div class="alert"><span><b>${esc(a.l||"NEW BOOKING")}</b><br>${esc(a.t)}</span><button class="btn" data-a="ack" data-id="${esc(a.id)}">Got it</button></div>`).join("")}
+let ft=null;
+function flash(){if(ft)return;let on=0;ft=setInterval(()=>{if(!S.alerts.length){clearInterval(ft);ft=null;document.title="Install Scheduler";return}document.title=(on^=1)?"🔔 NEW BOOKING":"Install Scheduler"},900)}
+const LBL={Requested:"NEW REQUEST — needs approval",Approved:"APPROVED — start the RO",Ready:"READY FOR INSTALL"};
+const wants=()=>true;
+function notify(b,id,l){
+  S.alerts.push({id,l,t:`${b.veh||b.ref}${b.veh&&b.ref?" ("+b.ref+")":""} · ${IT(b)} · ${lab(b.start)} · by ${b.by}${b.adv?" · advisor "+b.adv:""}`});
+  drawAlerts();flash();
+  try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator();o.connect(c.destination);o.frequency.value=880;o.start();setTimeout(()=>{o.stop();c.close()},350)}catch(e){}
+}
+
+document.addEventListener("input",e=>{
+  const d=e.target.dataset;
+  if(d.sf){const sv=S.sheet[+d.sr],o=d.st==="s"?sv:(d.st==="o"?sv.options:sv.addons)[+d.si];if(d.sp!=null){(o[d.sf]=o[d.sf]||[])[+d.sp]=e.target.value}else o[d.sf]=e.target.type==="checkbox"?e.target.checked:e.target.value;return}
+  if(d.a==="qty"){const it=S.items.find(x=>x.sid===d.sid);if(it){const v=Math.floor(Number(e.target.value));it.q=it.q||{};if(v>=1)it.q[+d.i]=v;else delete it.q[+d.i]}return}
+  const f=d.f;if(!f)return;S.f[f]=e.target.value;
+  if(f==="q"){S.q=e.target.value;$("#res").innerHTML=resHtml()}
+});
+document.addEventListener("change",async e=>{
+  const t=e.target,a=t.dataset.a;if(!a)return;
+  const it=S.items.find(x=>x.sid===t.dataset.sid);
+  if(a==="tier"&&it){it.tier=+t.value;S.date=null}
+  else if(a==="opt"&&it){it.opt=+t.value;S.date=null}
+  else if(a==="ad"&&it){const i=+t.dataset.i;it.ad=t.checked?[...it.ad,i]:it.ad.filter(x=>x!==i);if(!t.checked&&it.q)delete it.q[i];S.date=null}
+  else if(a==="qty"&&it){const v=Math.floor(Number(t.value));it.q=it.q||{};if(v>=1)it.q[+t.dataset.i]=v;else delete it.q[+t.dataset.i];S.date=null}
+  else if(a==="inst")S.inst=t.value;else if(a==="tm")S.tm=+t.value;else if(a==="qa")S.qa=t.value;else if(a==="jump")S.from=t.value;
+  else if(a==="adv"){try{if(db)await db.doc("bookings/"+t.dataset.id).update({adv:t.value});else{const b=S.bookings.find(x=>x.id===t.dataset.id);if(b)b.adv=t.value}toast("Reassigned to "+t.value)}catch(err){toast("Could not reassign")}}
+  render();
+});
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-a]");if(!b||b.tagName==="SELECT"||b.tagName==="INPUT")return;
+  const a=b.dataset.a,id=b.dataset.id;S.msg="";
+  if(a==="tab")S.tab=b.dataset.t;
+  else if(a==="tog"){const k=S.items.findIndex(x=>x.sid===b.dataset.sid);if(k>=0)S.items.splice(k,1);else S.items.push({sid:b.dataset.sid,tier:0,opt:0,ad:[],q:{}});S.date=null}
+  else if(a==="godate"){const e2=document.getElementById(S.date?"det":"dates");if(e2)e2.scrollIntoView({behavior:"smooth"});return}
+  else if(a==="date")S.date=b.dataset.d;
+  else if(a==="mo"){const d=parse(S.mo||tIso().slice(0,8)+"01");d.setMonth(d.getMonth()+ +b.dataset.d);const k=iso(d),n=new Date();n.setDate(1);n.setMonth(n.getMonth()+6);if(k>=tIso().slice(0,8)+"01"&&k<=iso(n))S.mo=k}
+  else if(a==="sday")S.sd=b.dataset.d;
+  else if(a==="gotoday"){S.sd=tIso();S.smo=tIso().slice(0,8)+"01"}
+  else if(a==="ovnok"){S.ack=S.key;S.modal=0;return confirm()}
+  else if(a==="ovnno"){S.modal=0}
+  else if(a==="setst"){const v=b.dataset.v;
+    if((v==="Approved"||v==="Declined")&&!(S.f.mname||"").trim()){toast("Enter your name at the top first.");return}
+    if(v==="Declined"&&!window.confirm("Decline this booking and free its time?"))return;
+    const up={status:v,sby:me};if(v==="Approved"||v==="Declined")up.aby=S.f.mname.trim();
+    try{if(db)await db.doc("bookings/"+id).update(up);else{const k=S.bookings.find(x=>x.id===id);if(k){Object.assign(k,up);if(v==="Declined")S.bookings=S.bookings.filter(x=>x.id!==id)}}toast(v==="Ready"?"Sent to the installer":v)}catch(err){toast("Could not update")}}
+  else if(a==="smo"){const d=parse(S.smo);d.setMonth(d.getMonth()+ +b.dataset.d);S.smo=iso(d)}
+  else if(a==="sadd"){S.sheet[+b.dataset.sr][b.dataset.st==="o"?"options":"addons"].push({n:"",h:0,pt:"",pr:""})}
+  else if(a==="sdel"){S.sheet[+b.dataset.sr][b.dataset.st==="o"?"options":"addons"].splice(+b.dataset.si,1)}
+  else if(a==="ssvc"){S.sheet.push({id:"s"+Date.now(),name:"New service",options:[{n:"",h:1}],addons:[]})}
+  else if(a==="sdelsvc"){if(window.confirm("Remove this whole service?"))S.sheet.splice(+b.dataset.sr,1)}
+  else if(a==="ssave")return saveSheet();
+  else if(a==="sdisc"){S.sheet=null}
+  else if(a==="confirm")return confirm();
+  else if(a==="cancel"){if(window.confirm("Cancel this booking?")){try{if(db)await db.collection("bookings").doc(id).delete();else S.bookings=S.bookings.filter(x=>x.id!==id)}catch(err){toast("Could not cancel")}}}
+  else if(a==="edit"){const k=S.bookings.find(x=>x.id===id);
+    if(!k.its){toast("This older booking can't be edited. Cancel and rebook.");return}
+    S.items=k.its.map(x=>({...x,ad:[...x.ad],q:{...(x.q||{})}}));S.f={by:k.by,adv:k.adv||"",veh:k.veh||"",ref:k.ref||"",note:k.note,sold:k.advSale?k.adv:""};S.date=k.start;S.tm=k.days[0].o;S.inst=String(k.inst);S.mo=k.start.slice(0,8)+"01";S.editId=id;S.tab="book";window.scrollTo(0,0)}
+  else if(a==="canceledit"){S.editId=null;S.items=[];S.date=null;S.f={by:S.f.by}}
+  else if(a==="ack")S.alerts=S.alerts.filter(x=>x.id!==id);
+  else if(a==="print"){try{window.print()}catch(err){toast("Printing is blocked here. Use your browser's print option.")}return}
+  else if(a==="saveCfg")return saveCfg(false);
+  else if(a==="resetCfg")return saveCfg(true);
+  render();
+});
+
+function pickAdv(all){const l=advs();if(!l.length)return "";const r=all.filter(b=>b.rot&&l.includes(b.rot)).sort((a,b)=>(b.created||"").localeCompare(a.created||""))[0];return r?l[(l.indexOf(r.rot)+1)%l.length]:l[0]}
+async function confirm(){
+  const hrs=total(),btn=$('[data-a="confirm"]'),edit=S.editId,sold=S.f.sold||"";
+  if(qtyMissing().length){S.ok=false;S.msg="Choose a quantity for: "+qtyMissing().join(", ")+".";return render()}
+  if(!(S.f.by||"").trim()){S.ok=false;S.msg="Enter who is booking this.";return render()}
+  
+  if(!(S.f.veh||"").trim()){S.ok=false;S.msg="Enter the vehicle.";return render()}
+  if(!(S.f.ref||"").trim()){S.ok=false;S.msg="Enter the stock number or VIN.";return render()}
+  if(S.ovn&&S.ack!==S.key){S.modal=1;return render()}
+  btn.disabled=true;
+  try{
+    let lock=!db;
+    for(let n=0;db&&n<6&&!lock;n++){const r=await db.doc("locks/schedule").acquire({holder:me,ttlMs:8000});if(r.acquired)lock=true;else await new Promise(r=>setTimeout(r,500))}
+    if(!lock){S.ok=false;S.msg="The schedule is busy. Try again in a moment.";return render()}
+    const all=(db?(await db.collection("bookings").get()).docs.map(d=>({id:d.id,...d.data()})):S.bookings).filter(b=>b.status!=="Declined");
+    const u=occ(edit?all.filter(b=>b.id!==edit):all),ok=okInsts(u,S.date,hrs).filter(x=>plan(u,x,S.date,hrs,S.tm));
+    const i=S.inst==="auto"?ok[0]:(ok.includes(+S.inst)?+S.inst:undefined);
+    const pl=i!=null?plan(u,i,S.date,hrs,S.tm):null;
+    if(!pl){S.bookings=all;S.ok=false;S.msg="Someone just took that slot. Pick another date.";return render()}
+    const bk={inst:i,start:S.date,days:pl,items:S.items.map(it=>itemLabel(svc(it.sid),it)),its:S.items.map(x=>({...x,ad:[...x.ad],q:{...(x.q||{})}})),total:hrs,pt:extras().pt,veh:S.f.veh.trim(),ref:S.f.ref.trim(),by:S.f.by.trim(),note:(S.f.note||"").trim()};
+    if(edit){if(db)await db.doc("bookings/"+edit).update(sold?{...bk,sby:me}:{...bk,status:"Requested",aby:"",sby:me});else Object.assign(S.bookings.find(x=>x.id===edit),bk);S.tab="sched";toast("Booking updated")}
+    else{const nb={...bk,adv:(S.asg=sold||(S.rot=pickAdv(all))),rot:sold?"":S.rot,advSale:!!sold,status:sold?"Approved":"Requested",mid:me,created:new Date().toISOString()};if(db)await db.collection("bookings").add(nb);else S.bookings.push({id:"l"+Date.now(),...nb});}
+    S.items=[];S.date=null;S.inst="auto";S.editId=null;S.f={by:S.f.by};S.ok=true;S.msg=edit?"":sold?"Booked for "+sold+". No approval needed.":"Request sent for manager approval"+(insts().length>1?" with "+insts()[i]:"")+". Routed to "+(S.asg||"an advisor")+".";
+  }catch(err){S.ok=false;S.msg="Could not save: "+(err&&err.message||err)}
+  render();
+}
+async function saveCfg(reset){
+  try{
+    const c=reset?DEF:JSON.parse($("#cfg").value);
+    if(!c.shop||!Array.isArray(c.shop.installers)||!c.shop.installers.length||!(c.shop.dayHours>0)||!Array.isArray(c.shop.workDays)||!Array.isArray(c.services)||!c.services.length)throw new Error("Need shop.installers, shop.dayHours, shop.workDays and services.");
+    c.services.forEach(s=>{if(!s.id||!s.name||!Array.isArray(s.options)||!s.options.length)throw new Error("Each service needs id, name and options.");s.addons=s.addons||[]});
+    if(db)await db.doc("config/catalog").set({json:JSON.stringify(c)});
+    S.cfg=c;S.items=[];S.date=null;S.ok=true;S.msg="Saved.";
+  }catch(err){S.ok=false;S.msg="Not saved: "+err.message}
+  render();
+}
+(async()=>{
+  try{if(window.claude){db=await claude.use("db");const u=await claude.use("user");S.can=u?!!(await u.canEdit()):false}}catch(e){db=null}
+  if(!window.claude)S.can=true;
+  if(db){
+    let first=true;
+    db.doc("config/catalog").onSnapshot(s=>{if(s.exists){try{S.cfg=JSON.parse(s.data().json)}catch(e){}}if(S.tab!=="admin")soft()});
+    db.collection("bookings").onSnapshot(s=>{
+      if(!first)s.docChanges().forEach(c=>{const b=c.doc.data(),id=c.doc.id,old=S.all.find(x=>x.id===id),stg=stOf(b),mine=c.type==="added"?b.mid===me:b.sby===me;if(!mine&&!(b.advSale&&c.type==="added")&&b.status!=="Declined"&&(c.type==="added"||(c.type==="modified"&&old&&stOf(old)!==stg))&&LBL[stg]&&wants(stg))notify(b,id,LBL[stg])});
+      first=false;S.all=s.docs.map(d=>({id:d.id,...d.data()}));S.bookings=S.all.filter(b=>b.status!=="Declined");soft();
+    },e=>{});
+  }else $("#banner").innerHTML='<div class="banner">Not connected to the shared schedule. Bookings made here are temporary and visible only to you. Open the published link while signed in to claude.ai.</div>';
+  
+  
+  
+  render();
+})();
+</script>
+</body>
+</html>
